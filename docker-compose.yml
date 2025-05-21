@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: us-stock-scanner-app
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-your_secret_key_here}
+      - LOGIN_PASSWORD=${LOGIN_PASSWORD:-admin}
+      - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY:-}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY:-}
+    networks:
+      - us-stock-scanner-network
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: us-stock-scanner-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    networks:
+      - us-stock-scanner-network
+
+networks:
+  us-stock-scanner-network:
+    driver: bridge
